@@ -23,7 +23,7 @@ class ARCLoader:
         if arc_version == 2:
             raise NotImplementedError("ARC 2 support coming soon!")
     
-    def load_tasks(self, split: str = "training") -> Dict:
+    def load_tasks(self, split: str = "3befdf3e") -> Dict:
         """
         Load all tasks from specified split.
         
@@ -34,7 +34,7 @@ class ARCLoader:
             Dictionary of task_id -> task_data
         """
         file_path = self.data_path / f"{split}.json"
-        
+        print(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"Could not find {file_path}")
             
