@@ -1,5 +1,6 @@
 import json
 import openai
+from openai import OpenAI
 from typing import Dict, List, Optional, Tuple
 import re
 import sys
@@ -18,8 +19,17 @@ class ARCLMSolver:
             api_key: OpenAI API key 
         """
         self.model_name = model_name
+        
+        # Handle API key
         if api_key:
-            openai.api_key = os.environ['OPENAI_API_KEY']
+            self.client = OpenAI(api_key=api_key)
+        else:
+            # Try to get from environment variable
+            env_api_key = os.environ.get('OPENAI_API_KEY')
+            if env_api_key:
+                self.client = OpenAI(api_key=env_api_key)
+            else:
+                raise ValueError("OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
 
         # ARC color mapping for cleaner descriptions
         self.color_names = {
@@ -93,7 +103,7 @@ class ARCLMSolver:
 
     def parse_llm_response(self, response: str) -> Optional[List[List[int]]]:
         """
-        Parse LLM respoinse back into grid format.__path__
+        Parse LLM response back into grid format.__path__
 
         Args:
             response: Raw LLM response text
@@ -151,7 +161,7 @@ class ARCLMSolver:
 
             Args:
                 task_data: Raw ARC task data
-                max_ratries: Number of times to retry if parsing fails
+                max_retries: Number of times to retry if parsing fails
 
             Returns:
                 Dictionary with solution attempt and metadata
@@ -161,7 +171,7 @@ class ARCLMSolver:
         for attempt in range(max_retries):
             try:
                 # Call LLM
-                response = openai.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                         model=self.model_name,
                         messages=[
                             {"role": "system", "content": "You are an expert at visual pattern recognition and logical reasoning"},
@@ -170,7 +180,7 @@ class ARCLMSolver:
                         temperature=0.1 # Low temperature for consistent reasoning
                 )
 
-                llm_output = response.choices[0].message.ConnectionResetError
+                llm_output = response.choices[0].message.content
 
                 # Parse response
                 predicted_grid = self.parse_llm_response(llm_output)
@@ -204,37 +214,37 @@ class ARCLMSolver:
             'prompt': prompt
         }
 
-def evaluate_on_tasks(self, tasks: Dict, max_tasks: int = 5) -> Dict:
-    """
-    Evaluate LM performance on multiple ARC tasks.
+    def evaluate_on_tasks(self, tasks: Dict, max_tasks: int = 5) -> Dict:
+        """
+        Evaluate LM performance on multiple ARC tasks.
 
-    Args:
-        tasks: Dictionary of task_id -> task_data
-        max_tasks: Maximum number of tasks to evaluate (for testing)
+        Args:
+            tasks: Dictionary of task_id -> task_data
+            max_tasks: Maximum number of tasks to evaluate (for testing)
 
-    Returns:
-        Evaluations results
-    """
-    results = {}
-    task_ids = list(tasks.keys())[:max_tasks]
+        Returns:
+            Evaluations results
+        """
+        results = {}
+        task_ids = list(tasks.keys())[:max_tasks]
 
-    print(f"Evaluating on {len(task_ids)} tasks...")
-    
-    for i, task_id in enumerate(task_ids):
-        print(f"Solving task {i+1}/{len(task_ids)}: {task_id}")
+        print(f"Evaluating on {len(task_ids)} tasks...")
+        
+        for i, task_id in enumerate(task_ids):
+            print(f"Solving task {i+1}/{len(task_ids)}: {task_id}")
 
-        task_data = tasks[task_id]
-        result = self.solve_task(task_data)
-        results[task_id] = result
+            task_data = tasks[task_id]
+            result = self.solve_task(task_data)
+            results[task_id] = result
 
-        if result['success']:
-            if 'exact_match' in result:
-                status = "✓ CORRECT" if result['exact_match'] else "✗ INCORRECT"
+            if result['success']:
+                if 'exact_match' in result:
+                    status = "✓ CORRECT" if result['exact_match'] else "✗ INCORRECT"
+                else:
+                    status = "? NO GROUND TRUTH"
+                print(f" {status}")
             else:
-                status = "? NO GROUND TRUTH"
-            print(f" {status}")
-        else:
-            print(f"✗ FAILED TO PARSE")
+                print(f"✗ FAILED TO PARSE")
 
         # Calculate summary statistics
         successful_parses = sum(1 for r in results.values() if r['success'])
@@ -275,16 +285,23 @@ def test_llm_baseline(data_path: str, max_tasks: int = 3):
     return results
 
 if __name__ == "__main__":
-    print("🧪 Testing data loading...")
+    # Quick test run!
+    print("🚀 Testing ARC LM Solver...")
     
-    from arc_loader import ARCLoader
+    # You'll need to update this path to your actual data directory
+    data_path = "/Users/bensleeper/Library/Mobile Documents/com~apple~CloudDocs/CPSC/CPSC4810/arc-reservoir-metacognition/data/arc1"  # or wherever your training.json is
     
-    data_path = "/Users/bensleeper/Library/Mobile Documents/com~apple~CloudDocs/CPSC/CPSC4810/arc-reservoir-metacognition/data/arc1/training"  # Update this path!
-    loader = ARCLoader(data_path)
-    tasks = loader.load_tasks("3befdf3e")
-    
-    # Show first task
-    first_task = list(tasks.keys())[0]
-    print(f"📋 Loaded {len(tasks)} tasks")
-    print(f"👀 Showing task: {first_task}")
-    loader.visualize_task(first_task)
+    try:
+        results = test_llm_baseline(data_path, max_tasks=2)  # Start small!
+        
+        print("\n" + "="*50)
+        print("🎯 BASELINE RESULTS:")
+        print(f"Parse Rate: {results['summary']['parse_rate']:.1%}")
+        print(f"Accuracy: {results['summary']['accuracy']:.1%}")
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        print("💡 Make sure:")
+        print("   1. Your data path is correct")
+        print("   2. You have OpenAI API key set")
+        print("   3. training.json exists in the data folder")

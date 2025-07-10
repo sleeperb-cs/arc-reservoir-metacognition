@@ -23,9 +23,9 @@ class ARCLoader:
         if arc_version == 2:
             raise NotImplementedError("ARC 2 support coming soon!")
     
-    def load_tasks(self, split: str = "3befdf3e") -> Dict:
+    def load_tasks(self, split: str = "training") -> Dict:
         """
-        Load all tasks from specified split.
+        Load all tasks from specified split directory.
         
         Args:
             split: "training" or "evaluation" 
@@ -33,17 +33,34 @@ class ARCLoader:
         Returns:
             Dictionary of task_id -> task_data
         """
-        file_path = self.data_path / f"{split}.json"
-        print(file_path)
-        if not file_path.exists():
-            raise FileNotFoundError(f"Could not find {file_path}")
+        split_path = self.data_path / split
+        
+        if not split_path.exists():
+            raise FileNotFoundError(f"Could not find directory {split_path}")
             
-        with open(file_path, 'r') as f:
-            data = json.load(f)
+        if not split_path.is_dir():
+            raise NotADirectoryError(f"{split_path} is not a directory")
+        
+        tasks = {}
+        json_files = list(split_path.glob("*.json"))
+        
+        if not json_files:
+            raise FileNotFoundError(f"No JSON files found in {split_path}")
+        
+        for json_file in json_files:
+            task_id = json_file.stem  # filename without .json extension
             
-        print(f"Loaded {len(data)} tasks from {split}")
-        self.tasks = data
-        return data
+            try:
+                with open(json_file, 'r') as f:
+                    task_data = json.load(f)
+                    tasks[task_id] = task_data
+            except Exception as e:
+                print(f"Warning: Could not load {json_file}: {e}")
+                continue
+        
+        print(f"Loaded {len(tasks)} tasks from {split}")
+        self.tasks = tasks
+        return tasks
     
     def get_task(self, task_id: str) -> Dict:
         """Get specific task by ID."""
@@ -200,3 +217,5 @@ def quick_explore(data_path: str):
     print(f"Most common colors: {sorted(stats['color_usage'].items(), key=lambda x: x[1], reverse=True)[:5]}")
     
     return loader
+
+# if __name__ == "__main__":
