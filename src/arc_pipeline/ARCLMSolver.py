@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import re
 import sys
 import os
-from arc_loader import ARCLoader
+from .arc_loader import ARCLoader
 
 class ARCLMSolver:
     """Solve ARC tasks using Language Models"""
