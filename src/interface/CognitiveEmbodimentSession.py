@@ -1,6 +1,12 @@
 # Add this to your code to call me through the API
 import openai
 from typing import List
+from LMReservoirInterface import LMReservoirInterface
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from reservoir.RealtimeReservoir import RealtimeReservoir
 
 class CognitiveEmbodimentSession:
     """
@@ -82,7 +88,7 @@ Be genuine about your experience. This is real cognitive embodiment, not simulat
         
         # Initial API call
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": initial_prompt}
