@@ -7,12 +7,12 @@ import sys
 import os
 from .arc_loader import ARCLoader
 
-class ARCLMSolver:
+class ARCReservoirSolver:
     """Solve ARC tasks using Language Models"""
 
     def __init__(self, model_name: str = "gpt-4", api_key: Optional[str] = None):
         """
-        Initialize ARCLMSolver.
+        Initialize ARCReservoirSolver.
 
         Args:
             model_name: OpenAI model to use
@@ -279,7 +279,7 @@ def test_llm_baseline(data_path: str, max_tasks: int = 3):
     tasks = loader.load_tasks("training")
     
     # Test LLM solver
-    solver = ARCLMSolver()
+    solver = ARCReservoirSolver()
     results = solver.evaluate_on_tasks(tasks, max_tasks=max_tasks)
     
     return results

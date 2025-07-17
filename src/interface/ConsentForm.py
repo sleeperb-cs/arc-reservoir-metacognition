@@ -1,9 +1,11 @@
 import time
 from typing import Any, Dict
+import sys
+import os
 
-from interface.LMReservoirInterface import LMReservoirInterface
+from LMReservoirInterface import LMReservoirInterface
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from reservoir.RealtimeReservoir import RealtimeReservoir
-
 
 
 class EthicalEmbodimentProtocol:

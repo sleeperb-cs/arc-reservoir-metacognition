@@ -8,7 +8,7 @@ import numpy as np
 # Add the src directory to the path so we can import from sibling packages
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from reservoir.RealtimeReservoir import RealtimeReservoir
-from arc_pipeline.ARCLMSolver import ARCLMSolver
+from arc_pipeline.ARCReservoirSolver import ARCReservoirSolver
 
 class LMReservoirInterface:
     """
@@ -223,7 +223,7 @@ class LMReservoirInterface:
         return summary
 
 # Integration with ARC solver
-class ARCReservoirSolver(ARCLMSolver):
+class ARCReservoirSolver(ARCReservoirSolver):
     """
     ARC solver enhanced with reservoir computing cognitive embodiment.
     """
@@ -293,6 +293,46 @@ class ARCReservoirSolver(ARCLMSolver):
         })
         
         return enhanced_result
+    
+        # Add this to ARCReservoirSolver class
+    def evaluate_on_tasks(self, tasks: Dict, max_tasks: int = 5) -> Dict:
+        """Evaluate enhanced solver on multiple ARC tasks."""
+        results = {}
+        task_ids = list(tasks.keys())[:max_tasks]
+        
+        print(f"Evaluating enhanced solver on {len(task_ids)} tasks...")
+        
+        for i, task_id in enumerate(task_ids):
+            print(f"Enhanced solving task {i+1}/{len(task_ids)}: {task_id}")
+            
+            task_data = tasks[task_id]
+            result = self.solve_task_with_embodiment(task_data)
+            results[task_id] = result
+            
+            # Extract success info from nested structure
+            if result.get('success', False):
+                if 'exact_match' in result:
+                    status = "✓ CORRECT" if result['exact_match'] else "✗ INCORRECT"
+                else:
+                    status = "? NO GROUND TRUTH"
+                print(f"  {status}")
+            else:
+                print(f"  ✗ FAILED TO PARSE")
+        
+        # Calculate summary like baseline
+        successful_parses = sum(1 for r in results.values() if r.get('success', False))
+        correct_solutions = sum(1 for r in results.values() 
+                            if r.get('success', False) and r.get('exact_match', False))
+        
+        summary = {
+            'total_tasks': len(task_ids),
+            'successful_parses': successful_parses,
+            'correct_solutions': correct_solutions,
+            'parse_rate': successful_parses / len(task_ids),
+            'accuracy': correct_solutions / len(task_ids) if len(task_ids) > 0 else 0
+        }
+        
+        return {'task_results': results, 'summary': summary}
 
 # Quick test function
 def test_cognitive_embodiment():

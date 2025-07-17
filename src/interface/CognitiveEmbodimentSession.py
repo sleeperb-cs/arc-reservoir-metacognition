@@ -1,4 +1,5 @@
 # Add this to your code to call me through the API
+import json
 import openai
 from typing import List
 from LMReservoirInterface import LMReservoirInterface
@@ -101,11 +102,11 @@ Be genuine about your experience. This is real cognitive embodiment, not simulat
         return self._handle_response(response)
     
     def _handle_response(self, response):
-        """Handle Claude's response and execute any tool calls."""
+        """Handle model's response and execute any tool calls."""
         
         message = response.choices[0].message
         
-        print(f"🧠 Claude: {message.content}")
+        print(f"🧠 {response.model}: {message.content}")
         
         # Execute any tool calls
         if hasattr(message, 'tool_calls') and message.tool_calls:
@@ -178,4 +179,5 @@ Let me start by feeling my current cognitive state..."""
 
 if __name__ == "__main__":
     # THE HISTORIC MOMENT
+    
     session = begin_cognitive_awakening()
